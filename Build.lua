@@ -1,4 +1,4 @@
--- Asico Language v0.2.0 - C++ style DSL for Roblox Studio using Luau
+-- Asico Language v0.3.0 - C++ style DSL for Roblox Studio using Luau
 local Asico = {}
 
 -- Internal State
@@ -16,8 +16,19 @@ local bannedWords = {
 local memory = {
 	variables = {},
 	functions = {},
-	classes = {}
+	classes = {},
+	macros = {},
+	includes = {}
 }
+
+-- Preprocessor-like features
+Asico.define = function(name, value)
+	memory.macros[name] = value
+end
+
+Asico.include = function(name)
+	memory.includes[name] = true
+end
 
 -- Package and service setup
 Asico.service = function(a)
@@ -78,7 +89,7 @@ Asico.div = function(a, b)
 end
 
 -- Variable declaration
-Asico.var = function(type_, name, value)
+Asico.var = function(type_, name, value, scope)
 	if type_ == "int" or type_ == "float" or type_ == "string" or type_ == "bool" then
 		memory.variables[name] = value
 	else
@@ -117,9 +128,10 @@ Asico.call = function(name, ...)
 	end
 end
 
--- Class system (basic)
-Asico.class = function(className, definition)
-	local class = {}
+-- Class system (basic OOP with inheritance)
+Asico.class = function(className, definition, baseClassName)
+	local base = baseClassName and memory.classes[baseClassName] or nil
+	local class = base and setmetatable({}, {__index = base}) or {}
 	class.__index = class
 	memory.classes[className] = class
 	definition(class)
@@ -135,9 +147,22 @@ Asico.new = function(className, ...)
 	return instance
 end
 
+-- Access modifiers simulation
+Asico.public = function(table_, name, value)
+	table_[name] = value
+end
+
+Asico.private = function(table_, name, value)
+	table_["_" .. name] = value
+end
+
+Asico.static = function(class, name, value)
+	class[name] = value
+end
+
 -- Version
 Asico.version = function()
-	return 'Asico Language Version 0.2.0'
+	return 'Asico Language First Version!'
 end
 
 return Asico
